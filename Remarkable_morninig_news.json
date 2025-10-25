@@ -1,0 +1,284 @@
+{
+  "name": "Remarkable_news",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.47:8000/put",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "folder",
+              "value": "/News"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1072,
+        -288
+      ],
+      "id": "ca648edc-fff8-49e7-908f-a17ee9d15c7e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "https://habr.com/ru/rss/all/all/?fl=ru",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        -48
+      ],
+      "id": "143e13d7-4a91-46d6-a823-1dd5ceb1f5e7",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "maxItems": 25
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -48
+      ],
+      "id": "571c71cd-a97e-40a6-bd73-fdf2eb15f599",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "00e20181-bd11-49f4-922f-bd731d7ba7ec",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "536c1c3b-0838-44da-8251-13d769ab72ec",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -48
+      ],
+      "id": "1477dd02-ce59-4274-9244-d00be1e0320b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  html: `\n  <!DOCTYPE html>\n  <html>\n  <head>\n    <meta charset=\"utf-8\">\n    <title>Новости</title>\n    <style>\n      @page {\n        size: A4 portrait;\n        margin: 15mm 20mm;\n      }\n      \n      html, body {\n        margin: 0;\n        padding: 0;\n        font-family: 'Arial', 'Helvetica', sans-serif;\n        background: white;\n      }\n      \n      .news-item {\n        position: relative;\n        width: 100%;\n        min-height: calc(297mm - 30mm); /* A4 portrait высота минус margins */\n        page-break-after: always;\n        page-break-inside: avoid;\n        break-after: page;\n        break-inside: avoid;\n        box-sizing: border-box;\n        padding: 0;\n      }\n      \n      .news-item:last-child {\n        page-break-after: auto;\n        break-after: auto;\n      }\n      \n      h1 {\n        font-size: 24pt;\n        font-weight: bold;\n        margin: 0 0 8mm 0;\n        text-align: center;\n        color: #000;\n        line-height: 1.2;\n      }\n      \n      .image-container {\n        text-align: center;\n        margin: 0 0 8mm 0;\n        max-height: 200mm;\n        overflow: hidden;\n      }\n      \n      img {\n        display: block;\n        max-width: 100%;\n        max-height: 200mm;\n        width: auto;\n        height: auto;\n        margin: 0 auto;\n        object-fit: contain;\n      }\n      \n      .content {\n        font-size: 14pt;\n        line-height: 1.5;\n        text-align: justify;\n        color: #000;\n        margin: 0;\n        word-wrap: break-word;\n        overflow-wrap: break-word;\n      }\n      \n      .content a {\n        color: #0066cc;\n        text-decoration: underline;\n      }\n      \n      .content p {\n        margin: 0 0 1em 0;\n      }\n    </style>\n  </head>\n  <body>\n    ${items.map((i, index) => `\n      <div class=\"news-item\">\n        <h1>${(i.json.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h1>\n        ${i.json.image ? `\n          <div class=\"image-container\">\n            <img src=\"${i.json.image}\" alt=\"\" loading=\"eager\" onerror=\"this.style.display='none'\" />\n          </div>\n        ` : ''}\n        <div class=\"content\">${i.json.content || ''}</div>\n      </div>\n    `).join('')}\n  </body>\n  </html>\n  `\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -144
+      ],
+      "id": "892c8586-5b92-44f7-9490-0da268523e18",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "htmlContent": "={{ $json.html }}",
+        "additionalFiles": {},
+        "advancedOptions": {},
+        "headerFooter": {}
+      },
+      "type": "n8n-nodes-gotenberg-pdf.gotenberg",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -224
+      ],
+      "id": "ba577a69-9fb0-4159-84cf-5d785f04e8da",
+      "name": "Gotenberg",
+      "credentials": {
+        "gotenbergApi": {
+          "id": "pCSVeO7iA6sDts9r",
+          "name": "Gotenberg account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/data/news_{{ $now.format('yyyy-MM-dd_HH') }}.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        272
+      ],
+      "id": "c4bd9198-32d1-434c-a001-50dbe03331d5",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.1.47:8000/ls",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        272
+      ],
+      "id": "889f285a-c1ca-4f29-8ffe-42e450e7a1c1",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем текущую дату/время\nconst now = new Date();\nconst year = now.getFullYear();\nconst month = String(now.getMonth() + 1).padStart(2, '0');\nconst day = String(now.getDate()).padStart(2, '0');\nconst hour = String(now.getHours()).padStart(2, '0');\nconst minutes = String(now.getMinutes()).padStart(2, '0');\n// Формируем имя файла\nconst fileName = `news_${year}-${month}-${day}_${hour}_${minutes}.pdf`;\n\n// Возвращаем с новым именем\nreturn [{\n  json: $input.item.json,\n  binary: {\n    data: {\n      ...($input.item.binary.data),\n      fileName: fileName\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -416
+      ],
+      "id": "489c4464-0ead-44dc-a260-fb1611359b8a",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        -48
+      ],
+      "id": "63921a45-1561-4be3-b532-9a0c2bf926fc",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f8ec0cb2-32f0-487f-a146-2ab0ab5a418c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b9f97c6ab551b97ac75a325d0f8389a980286b12baee8a8b0a94061ba9fc45e0"
+  },
+  "id": "gfDB6DDBEk2Q3Rta",
+  "tags": []
+}

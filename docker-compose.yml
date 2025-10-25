@@ -1,0 +1,34 @@
+  # version: "3.7"
+services:
+  rmapi:
+    build: https://github.com/ddvk/rmapi.git
+    container_name: rmapi
+    working_dir: /data
+    volumes:
+      - ./config:/home/app/.config/rmapi   
+      - ./data:/data
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=Europe/Moscow
+
+  rmapi_api:
+    build: .
+    container_name: rmapi_api
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rmapi
+      
+      
+      
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "3000:3000"
+
+
+
