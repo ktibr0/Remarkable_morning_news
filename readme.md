@@ -1,4 +1,5 @@
 # Remarkable Morning News 📰
+Версия на русском языке https://github.com/ktibr0/Remarkable_morning_news/blob/main/readme_remarkable_rus.md
 
 Automatic delivery of news from RSS feeds to your reMarkable in PDF format.
 
